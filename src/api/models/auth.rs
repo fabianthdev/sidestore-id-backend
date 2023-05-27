@@ -1,0 +1,25 @@
+use serde::{Deserialize, Serialize};
+
+use crate::db::models::user::User;
+
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub profile: User,
+}
+
+#[derive(Deserialize)]
+pub struct SignupRequest {
+    pub email: String,
+    pub password: String,
+}
+
+pub type SignupResponse = LoginResponse;

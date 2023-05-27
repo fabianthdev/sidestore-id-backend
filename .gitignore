@@ -1,0 +1,8 @@
+# Rust
+/target
+
+# VS Code
+.vscode/
+
+# Envirment
+.env
