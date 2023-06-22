@@ -26,24 +26,18 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                         web::resource("/me").route(web::get().to(auth_controller::me)),
                     ),
             )
-            // .service(
-            //     web::scope("/address-book")
-            //         .service(
-            //             web::resource("")
-            //                 .route(web::get().to(address_book_controller::find_all))
-            //                 .route(web::post().to(address_book_controller::insert)),
-            //         )
-            //         .service(
-            //             web::resource("/{id}")
-            //                 .route(web::get().to(address_book_controller::find_by_id))
-            //                 .route(web::put().to(address_book_controller::update))
-            //                 .route(web::delete().to(address_book_controller::delete)),
-            //         )
-            //         .service(
-            //             web::resource("/filter")
-            //                 .route(web::get().to(address_book_controller::filter)),
-            //         ),
-            // ),
+            .service(
+                web::scope("/reviews")
+                    .service(
+                        web::resource("/public_key").route(web::get().to(app_review_controller::get_public_key)),
+                    )
+                    .service(
+                        web::resource("/sign").route(web::post().to(app_review_controller::sign))
+                    )
+                    .service(
+                        web::resource("/delete").route(web::delete().to(app_review_controller::delete))
+                    ),
+            )
     );
     debug!("Routes configured!")
 }

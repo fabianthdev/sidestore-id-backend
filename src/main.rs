@@ -11,15 +11,18 @@ mod util;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
+use ed25519_dalek::SigningKey;
 use log::info;
 
 use crate::config::Config;
 use crate::db::Pool;
+use crate::util::review_signing::create_or_load_review_signing_key;
 
 
 pub struct AppState {
     db: Pool,
     env: Config,
+    review_signing_key: SigningKey,
 }
 
 
@@ -33,6 +36,13 @@ async fn main() -> std::io::Result<()> {
 
     let pool = db::create_pool(&config.database_url);
     db::run_migration(&mut pool.get().unwrap());
+
+    let review_signing_key = match create_or_load_review_signing_key(&config) {
+        Ok(review_signing_key) => review_signing_key,
+        Err(e) => {
+            panic!("Failed to load review signing key: {}", e);
+        }
+    };
 
     let server = HttpServer::new(move || {
         App::new()
@@ -48,6 +58,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 env: config.clone(),
+                review_signing_key: review_signing_key.clone(),
             }))
             .wrap(actix_web::middleware::Logger::default())
             .configure(config::app::config_services)

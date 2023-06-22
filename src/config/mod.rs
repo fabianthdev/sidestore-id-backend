@@ -5,7 +5,6 @@ pub mod db;
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub database_url: String,
     // pub secret_key: String,
     pub host: String,
     pub port: u16,
@@ -13,11 +12,12 @@ pub struct Config {
     pub jwt_issuer: String,
     pub jwt_expiration: i64,
     pub jwt_refresh_expiration: i64,
+    pub database_url: String,
+    pub storage_path: String,
 }
 
 impl Config {
     pub fn init() -> Config {
-        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         // let secret_key = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
         let host = std::env::var("HOST").expect("HOST must be set");
         let port = match std::env::var("PORT").expect("PORT must be set").parse::<u16>() {
@@ -34,9 +34,10 @@ impl Config {
             Ok(val) => val.parse::<i64>().expect("JWT_REFRESH_EXPIRATION must be an integer"),
             Err(_) => DEFAULT_JWT_REFRESH_EXPIRATION,
         };
+        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let storage_path = std::env::var("STORAGE_PATH").expect("STORAGE_PATH must be set");
 
         Config {
-            database_url,
             // secret_key,
             host,
             port,
@@ -44,6 +45,8 @@ impl Config {
             jwt_issuer,
             jwt_expiration,
             jwt_refresh_expiration,
+            database_url,
+            storage_path,
         }
     }
 }

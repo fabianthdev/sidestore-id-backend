@@ -8,3 +8,4 @@ JWT_ISSUER="Service Name"
 
 
 DATABASE_URL=postgres://user:password@localhost/database
+STORAGE_PATH=/data

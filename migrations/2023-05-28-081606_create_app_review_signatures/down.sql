@@ -1,0 +1,1 @@
+DROP TABLE app_review_signatures;

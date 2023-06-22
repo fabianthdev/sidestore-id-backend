@@ -4,5 +4,6 @@
 # VS Code
 .vscode/
 
-# Envirment
+# Environment
 .env
+storage/
