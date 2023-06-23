@@ -96,6 +96,7 @@ pub mod review_signing {
                 jwt_issuer: "io.sidestore.SideStore-ID".to_string(),
                 jwt_expiration: 3600,
                 jwt_refresh_expiration: 86400,
+                cors_origin: "*".to_string(),
                 database_url: "sqlite://test.db".to_string(),
                 storage_path: "./test-storage".to_string(),
             };

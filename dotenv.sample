@@ -6,6 +6,7 @@ JWT_ISSUER="Service Name"
 # JWT_EXPIRATION=3600
 # JWT_REFRESH_EXPIRATION=604800
 
+CORS_ORIGIN=*
 
 DATABASE_URL=postgres://user:password@localhost/database
 STORAGE_PATH=/data

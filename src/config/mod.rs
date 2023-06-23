@@ -12,6 +12,7 @@ pub struct Config {
     pub jwt_issuer: String,
     pub jwt_expiration: i64,
     pub jwt_refresh_expiration: i64,
+    pub cors_origin: String,
     pub database_url: String,
     pub storage_path: String,
 }
@@ -34,6 +35,7 @@ impl Config {
             Ok(val) => val.parse::<i64>().expect("JWT_REFRESH_EXPIRATION must be an integer"),
             Err(_) => DEFAULT_JWT_REFRESH_EXPIRATION,
         };
+        let cors_origin = std::env::var("CORS_ORIGIN").expect("CORS_ORIGIN must be set");
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let storage_path = std::env::var("STORAGE_PATH").expect("STORAGE_PATH must be set");
 
@@ -45,6 +47,7 @@ impl Config {
             jwt_issuer,
             jwt_expiration,
             jwt_refresh_expiration,
+            cors_origin,
             database_url,
             storage_path,
         }

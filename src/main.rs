@@ -48,10 +48,14 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(
                 Cors::default()
-                    .allow_any_origin()
-                    .send_wildcard()
+                    .allowed_origin(&config.cors_origin)
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-                    .allowed_headers(vec!["Authorization", "Content-Type", "Accept"])
+                    .allowed_headers(vec![
+                        actix_web::http::header::AUTHORIZATION,
+                        actix_web::http::header::CONTENT_TYPE,
+                        actix_web::http::header::ACCEPT
+                    ])
+                    .supports_credentials()
                     .max_age(3600)
             )
             .wrap(Logger::default())
