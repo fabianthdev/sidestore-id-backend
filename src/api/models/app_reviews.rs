@@ -27,7 +27,7 @@ pub struct AppReviewDeletionRequest {
     pub app_bundle_id: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum AppReviewStatus {
     #[serde(rename = "published")]
     Published,
@@ -89,6 +89,35 @@ impl AppReviewSignatureData {
             review_body: None,
             created_at: review.created_at.timestamp(),
             updated_at: review.updated_at.timestamp()
+        }
+    }
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserAppReview {
+    pub id: String,
+    pub status: AppReviewStatus,
+    pub source_identifier: String,
+    pub app_bundle_identifier: String,
+    pub version_number: Option<String>,
+    pub review_rating: Option<i32>,
+    pub date: i64,
+    pub signature: Option<String>,
+}
+
+impl From<&AppReviewSignature> for UserAppReview {
+    fn from(value: &AppReviewSignature) -> Self {
+        UserAppReview {
+            id: value.id.clone(),
+            status: AppReviewStatus::Published,  // TODO: Make this dynamic
+            source_identifier: value.source_id.clone(),
+            app_bundle_identifier: value.app_bundle_id.clone(),
+            version_number: value.app_version.clone(),
+            review_rating: value.review_rating,
+            date: value.updated_at.timestamp(),
+            signature: value.signature.clone()
         }
     }
 }

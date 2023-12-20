@@ -15,7 +15,8 @@ use crate::{
 use super::models::app_reviews::{
     AppReviewSignatureRequest, AppReviewSignatureResponse,
     AppReviewSignatureData, AppReviewStatus,
-    AppReviewDeletionRequest
+    AppReviewDeletionRequest,
+    UserAppReview,
 };
 
 
@@ -95,6 +96,19 @@ pub async fn sign(body: web::Json<AppReviewSignatureRequest>, data: web::Data<Ap
             return Err(ServiceError::InternalServerError { error_message: "Failed to update review".to_string() })
         }
     }
+}
+
+pub async fn get(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {
+    let reviews: Vec<UserAppReview> = AppReviewSignature::find_all_by_user_id(&jwt.user_id, &mut data.db.get().unwrap())
+        .map_err(|e| {
+            log::debug!("Failed to get app reviews for user {:?}: {:?}", jwt.user_id, e);
+            ServiceError::NotFound { error_message: "Couldn't find any reviews for the requesting user".to_string() }
+        })?
+        .iter()
+        .map(|r| UserAppReview::from(r))
+        .collect();
+
+    Ok(HttpResponse::Ok().json(reviews))
 }
 
 pub async fn delete(body: web::Json<AppReviewDeletionRequest>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {

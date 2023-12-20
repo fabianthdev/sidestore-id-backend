@@ -1,3 +1,4 @@
+use diesel::sql_types::Uuid;
 use log::error;
 use chrono::{Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,12 @@ impl AppReviewSignature {
             .filter(app_review_signatures::source_id.eq(source_id.to_string()))
             .filter(app_review_signatures::app_bundle_id.eq(app_bundle_id.to_string()))
             .get_result::<Self>(conn)
+    }
+
+    pub fn find_all_by_user_id(user_id: &uuid::Uuid, conn: &mut Connection) -> Result<Vec<Self>, Error> {
+        app_review_signatures::dsl::app_review_signatures
+            .filter(app_review_signatures::user_id.eq(user_id.to_string()))
+            .get_results(conn)
     }
 
     pub fn find_latest_sequence_number(source_id: &str, app_bundle_id: &str, conn: &mut Connection) -> Result<i32, Error> {

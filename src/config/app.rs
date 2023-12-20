@@ -35,6 +35,9 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                         web::resource("/sign").route(web::post().to(app_review_controller::sign))
                     )
                     .service(
+                        web::resource("").route(web::get().to(app_review_controller::get))
+                    )
+                    .service(
                         web::resource("/delete").route(web::delete().to(app_review_controller::delete))
                     ),
             )
