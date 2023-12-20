@@ -75,7 +75,7 @@ pub async fn sign(body: web::Json<AppReviewSignatureRequest>, data: web::Data<Ap
     };
 
     let review_data = AppReviewSignatureData::from_signature_request(&body, &review);
-    let signature = match sign_review(review_data, &data.review_signing_key) {
+    let signature = match sign_review(&review_data, &data.review_signing_key) {
         Ok(signature) => signature,
         Err(e) => {
             debug!("Error signing review: {}", e);
@@ -87,7 +87,7 @@ pub async fn sign(body: web::Json<AppReviewSignatureRequest>, data: web::Data<Ap
     match review.update(&mut data.db.get().unwrap()) {
         Ok(_) => Ok(HttpResponse::Ok().json(AppReviewSignatureResponse {
             sequence_number: review.sequence_number,
-            review_date: review.updated_at.timestamp(),
+            review_date: review_data.updated_at,
             signature
         })),
         Err(e) => {
@@ -115,7 +115,7 @@ pub async fn delete(body: web::Json<AppReviewDeletionRequest>, data: web::Data<A
             };
 
             let review_data = AppReviewSignatureData::from_deletion_request(&body, &review);
-            let signature = match sign_review(review_data, &data.review_signing_key) {
+            let signature = match sign_review(&review_data, &data.review_signing_key) {
                 Ok(signature) => signature,
                 Err(e) => {
                     debug!("Error signing review: {}", e);
@@ -126,7 +126,7 @@ pub async fn delete(body: web::Json<AppReviewDeletionRequest>, data: web::Data<A
             match review.update(&mut data.db.get().unwrap()) {
                 Ok(_) => Ok(HttpResponse::Ok().json(AppReviewSignatureResponse {
                     sequence_number: review.sequence_number,
-                    review_date: review.updated_at.timestamp(),
+                    review_date: review_data.updated_at,
                     signature
                 })),
                 Err(e) => {

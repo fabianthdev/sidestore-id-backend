@@ -63,8 +63,15 @@ pub mod review_signing {
     }
     
 
-    pub fn sign_review(review_data: AppReviewSignatureData, signing_key: &SigningKey) -> Result<String, ServiceError> {
-        let review_data_json = match serde_json::to_string(&review_data) {
+    pub fn sign_review(review_data: &AppReviewSignatureData, signing_key: &SigningKey) -> Result<String, ServiceError> {
+        let review_data_object = match serde_json::to_value(review_data) {
+            Ok(object) => object.as_object().unwrap().clone(),
+            Err(e) => {
+                debug!("Failed to create BTreeMap from review data: {}", e);
+                return Err(ServiceError::InternalServerError { error_message: "Failed to serialize review data".to_string() })
+            }
+        };
+        let review_data_json = match serde_json::to_string(&review_data_object) {
             Ok(json) => json,
             Err(e) => {
                 debug!("Error serializing review data: {}", e);
@@ -118,7 +125,7 @@ pub mod review_signing {
             let review_data_json = serde_json::to_string(&review_data).unwrap();
             assert_eq!(review_data_json, "{\"sidestore_user_id\":\"uuid-1234-5678-9012-3456\",\"status\":\"published\",\"sequence_number\":69,\"source_identifier\":\"io.sidestore.Connect\",\"app_bundle_identifier\":\"com.SideStore.SideStore\",\"version_number\":\"4.2.0\",\"review_rating\":5,\"review_title\":\"This is a test review\",\"review_body\":\"This is a test review body\",\"created_at\":1682007600,\"updated_at\":1682007600}" );
     
-            let signature = sign_review(review_data, &signing_key).unwrap();
+            let signature = sign_review(&review_data, &signing_key).unwrap();
             println!("Signature: {}", signature);
             assert_eq!(signature, "W+XULDRHnhOFxWi5NJS0sMr11+9128XqZADIFp3NPmNky6sgIZ5MCR8NPn0Ee64W7KFhozlydendO1LAE8SWDA==".to_string())
         }
