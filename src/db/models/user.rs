@@ -3,12 +3,13 @@ use chrono::{Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use diesel::{Queryable, Insertable, AsChangeset, RunQueryDsl, QueryDsl, ExpressionMethods};
 use diesel::result::Error;
+use utoipa::ToResponse;
 
 use crate::db::Connection;
 use crate::db::schema::users;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset)]
+#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset, ToResponse)]
 #[diesel(table_name = users)]
 pub struct User {
     #[serde(default, skip_serializing)]

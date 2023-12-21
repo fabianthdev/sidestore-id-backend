@@ -48,7 +48,9 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(
                 Cors::default()
-                    .allowed_origin(&config.cors_origin)
+                    // .allowed_origin(&config.cors_origin)
+                    .allow_any_origin()
+                    // .send_wildcard()
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
                     .allowed_headers(vec![
                         actix_web::http::header::AUTHORIZATION,

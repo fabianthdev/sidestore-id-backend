@@ -42,5 +42,17 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                     ),
             )
     );
+
+    #[cfg(feature = "swagger")]
+    {
+        use utoipa::OpenApi;
+        use utoipa_swagger_ui::SwaggerUi;
+
+        cfg.service(
+            SwaggerUi::new("/swagger-ui/{_:.*}")
+                .url("/api-docs/openapi.json", doc::ApiDoc::openapi())
+        );
+    }
+
     debug!("Routes configured!")
 }

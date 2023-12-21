@@ -1,22 +1,23 @@
 use serde::{Deserialize, Serialize};
+use utoipa::{ToSchema, ToResponse};
 
 use crate::db::models::user::User;
 
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
     pub email: String,
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToResponse)]
 pub struct LoginResponse {
     pub access_token: String,
     pub refresh_token: String,
     pub profile: User,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct SignupRequest {
     pub email: String,
     pub password: String,

@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
+use utoipa::{ToResponse, ToSchema};
 
 use crate::db::models::app_review::AppReviewSignature;
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct AppReviewSignatureRequest {
     pub source_identifier: String,
     pub app_bundle_id: String,
@@ -14,20 +15,20 @@ pub struct AppReviewSignatureRequest {
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToResponse)]
 pub struct AppReviewSignatureResponse {
     pub sequence_number: i32,
     pub review_date: i64,
     pub signature: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct AppReviewDeletionRequest {
     pub source_identifier: String,
     pub app_bundle_id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToResponse, ToSchema)]
 pub enum AppReviewStatus {
     #[serde(rename = "published")]
     Published,
@@ -94,7 +95,7 @@ impl AppReviewSignatureData {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToResponse, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserAppReview {
     pub id: String,
@@ -121,3 +122,7 @@ impl From<&AppReviewSignature> for UserAppReview {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, ToResponse)]
+#[serde(rename_all = "camelCase")]
+pub struct UserAppReviewList(Vec<UserAppReview>);

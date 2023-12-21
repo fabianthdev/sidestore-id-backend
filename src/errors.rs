@@ -5,6 +5,7 @@ use actix_web::{
 };
 use serde::Serialize;
 use derive_more::{Display, Error};
+use utoipa::ToResponse;
 
 #[derive(Debug, Display, Error)]
 pub enum ServiceError {
@@ -24,7 +25,10 @@ pub enum ServiceError {
     ValidationError { field: String },
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToResponse)]
+#[response(
+    description = "The server encountered an error while trying to fulfill the request."
+)]
 pub struct ErrorResponse {
     pub error_message: String,
 }

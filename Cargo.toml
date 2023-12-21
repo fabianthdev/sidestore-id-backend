@@ -48,5 +48,14 @@ env_logger = "0.10.0"
 # Utilities
 derive_more = "0.99.17"
 
+# OpenAPI spec
+utoipa = { version = "4", features = ["actix_extras", "uuid", "chrono"] }
+utoipa-swagger-ui = { version = "5", features = ["actix-web"] }
+
+
 [dev-dependencies]
 testcontainers = "0.14.0"
+
+
+[features]
+swagger = []
