@@ -1,5 +1,6 @@
 pub const DEFAULT_JWT_EXPIRATION: i64 = 3600;
 pub const DEFAULT_JWT_REFRESH_EXPIRATION: i64 = 3600*24*7;
+pub const DEFAULT_OAUTH_CONFIG_PATH: &str = "/config/oauth_config.toml";
 
 pub const REFRESH_API_PATH: &str = "/api/auth/refresh";
 pub const UNPROTECTED_API_PATHS: [&str; 4] = [

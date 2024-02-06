@@ -24,6 +24,17 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                     )
                     .service(
                         web::resource("/me").route(web::get().to(auth_controller::me)),
+                    )
+                    .service(
+                        web::scope("/oauth2")
+                            .service(
+                                web::resource("/authorize")
+                                    .route(web::get().to(oauth2_controller::get_authorize))
+                                    .route(web::post().to(oauth2_controller::post_authorize)),
+                            )
+                            .service(
+                                web::resource("/token").route(web::post().to(oauth2_controller::token)),
+                            )
                     ),
             )
             .service(

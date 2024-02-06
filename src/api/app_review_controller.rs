@@ -11,6 +11,8 @@ use crate::{
     middlewares::auth::JwtMiddleware,
     db::models::{app_review::AppReviewSignature, DbModel},
 };
+use crate::api::utils::enforce_scope;
+use crate::auth::JwtTokenScope;
 
 use super::models::app_reviews::{
     AppReviewSignatureRequest, AppReviewSignatureResponse,
@@ -62,6 +64,8 @@ pub async fn get_public_key(data: web::Data<AppState>) -> Result<NamedFile, Serv
     )
 )]
 pub async fn sign(body: web::Json<AppReviewSignatureRequest>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {
+    enforce_scope(&jwt, JwtTokenScope::Full)?;
+
     let mut review = match AppReviewSignature::find_by_user_id(
         &jwt.user_id, &body.source_identifier, &body.app_bundle_id, &mut data.db.get().unwrap()
     ) {
@@ -131,6 +135,8 @@ pub async fn sign(body: web::Json<AppReviewSignatureRequest>, data: web::Data<Ap
     )
 )]
 pub async fn get(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {
+    enforce_scope(&jwt, JwtTokenScope::Full)?;
+
     let reviews: Vec<UserAppReview> = AppReviewSignature::find_all_by_user_id(&jwt.user_id, &mut data.db.get().unwrap())
         .map_err(|e| {
             log::debug!("Failed to get app reviews for user {:?}: {:?}", jwt.user_id, e);
@@ -156,6 +162,8 @@ pub async fn get(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpRe
     )
 )]
 pub async fn delete(body: web::Json<AppReviewDeletionRequest>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {
+    enforce_scope(&jwt, JwtTokenScope::Full)?;
+
     let mut review = AppReviewSignature::find_by_user_id(
         &jwt.user_id, &body.source_identifier, &body.app_bundle_id, &mut data.db.get().unwrap()
     ).map_err(|_| ServiceError::NotFound { error_message: "You didn't review this app yet.".to_string() })?;

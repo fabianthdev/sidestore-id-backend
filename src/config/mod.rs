@@ -1,4 +1,4 @@
-use crate::constants::{DEFAULT_JWT_EXPIRATION, DEFAULT_JWT_REFRESH_EXPIRATION};
+use crate::constants::{DEFAULT_JWT_EXPIRATION, DEFAULT_JWT_REFRESH_EXPIRATION, DEFAULT_OAUTH_CONFIG_PATH};
 
 pub mod app;
 pub mod db;
@@ -13,8 +13,10 @@ pub struct Config {
     pub jwt_expiration: i64,
     pub jwt_refresh_expiration: i64,
     pub cors_origin: String,
+    pub public_url: String,
     pub database_url: String,
     pub storage_path: String,
+    pub oauth_config_path: String,
 }
 
 impl Config {
@@ -36,8 +38,12 @@ impl Config {
             Err(_) => DEFAULT_JWT_REFRESH_EXPIRATION,
         };
         let cors_origin = std::env::var("CORS_ORIGIN").expect("CORS_ORIGIN must be set");
+        let public_url = std::env::var("PUBLIC_URL").expect("PUBLIC_URL must be set");
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let storage_path = std::env::var("STORAGE_PATH").expect("STORAGE_PATH must be set");
+
+        let oauth_config_path = std::env::var("OAUTH_CONFIG_PATH")
+            .unwrap_or(DEFAULT_OAUTH_CONFIG_PATH.to_string());
 
         Config {
             // secret_key,
@@ -48,8 +54,10 @@ impl Config {
             jwt_expiration,
             jwt_refresh_expiration,
             cors_origin,
+            public_url,
             database_url,
             storage_path,
+            oauth_config_path,
         }
     }
 }

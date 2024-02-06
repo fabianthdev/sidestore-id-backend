@@ -1,4 +1,4 @@
-use crate::auth::create_auth_tokens;
+use crate::auth::{create_auth_tokens, JwtTokenScope};
 use crate::config::Config;
 use crate::db::Pool;
 use crate::db::models::user::{User, UserDTO};
@@ -21,7 +21,7 @@ pub fn signup(user_dto: UserDTO, pool: &Pool, config: &Config) -> Result<UserAnd
         Err(_) => return Err(ServiceError::InternalServerError { error_message: "User could not be saved".to_string() })
     };
 
-    let (access_token, refresh_token) = match create_auth_tokens(&user, config) {
+    let (access_token, refresh_token) = match create_auth_tokens(&user, config, JwtTokenScope::Full) {
         Ok(tokens) => tokens,
         Err(e) => return Err(ServiceError::InternalServerError { error_message: e })
     };
@@ -43,7 +43,7 @@ pub fn login(user_dto: UserDTO, pool: &Pool, config: &Config) -> Result<UserAndT
         return Err(ServiceError::Unauthorized { error_message: "Password is incorrect".to_string() })
     }
 
-    let (access_token, refresh_token) = match create_auth_tokens(&user, config) {
+    let (access_token, refresh_token) = match create_auth_tokens(&user, config, JwtTokenScope::Full) {
         Ok(tokens) => tokens,
         Err(e) => return Err(ServiceError::InternalServerError { error_message: e })
     };
@@ -59,7 +59,7 @@ pub fn refresh(pool: &Pool, config: &Config, user_id: uuid::Uuid) -> Result<User
         Err(_) => return Err(ServiceError::Unauthorized { error_message: "User not found".to_string() })
     };
 
-    let (access_token, refresh_token) = match create_auth_tokens(&user, config) {
+    let (access_token, refresh_token) = match create_auth_tokens(&user, config, JwtTokenScope::Full) {
         Ok(tokens) => tokens,
         Err(e) => return Err(ServiceError::InternalServerError { error_message: e })
     };

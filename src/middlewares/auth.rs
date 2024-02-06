@@ -5,13 +5,14 @@ use actix_web::{dev::Payload, Error as ActixWebError};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
-use crate::auth::{JwtToken, JwtTokenType};
+use crate::auth::{JwtToken, JwtTokenScope, JwtTokenType};
 use crate::AppState;
 use crate::constants::{REFRESH_API_PATH, UNPROTECTED_API_PATHS};
 
 
 pub struct JwtMiddleware {
     pub user_id: uuid::Uuid,
+    pub scope: JwtTokenScope,
 }
 
 impl FromRequest for JwtMiddleware {
@@ -22,6 +23,7 @@ impl FromRequest for JwtMiddleware {
         if UNPROTECTED_API_PATHS.contains(&req.path()) {
             return ready(Ok(JwtMiddleware {
                 user_id: uuid::Uuid::nil(),
+                scope: JwtTokenScope::Full,
             }));
         }
 
@@ -79,6 +81,9 @@ impl FromRequest for JwtMiddleware {
         let user_id = uuid::Uuid::parse_str(token.claims.sub.as_str()).unwrap();
         req.extensions_mut().insert::<uuid::Uuid>(user_id.to_owned());
 
-        ready(Ok(JwtMiddleware { user_id }))
+        ready(Ok(JwtMiddleware {
+            user_id,
+            scope: token.claims.scope,
+        }))
     }
 }

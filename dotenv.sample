@@ -8,5 +8,7 @@ JWT_ISSUER="Service Name"
 
 CORS_ORIGIN=*
 
+PUBLIC_URL=https://id.sidestore.io
+
 DATABASE_URL=postgres://user:password@localhost/database
 STORAGE_PATH=/data

@@ -1,9 +1,11 @@
 # Rust
 /target
 
-# VS Code
+# IDE
 .vscode/
+.idea/
 
 # Environment
 .env
+oauth_config.toml
 storage/
