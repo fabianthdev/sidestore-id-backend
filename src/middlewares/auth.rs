@@ -1,14 +1,13 @@
 use std::future::{ready, Ready};
 
-use actix_web::error::ErrorUnauthorized;
 use actix_web::{dev::Payload, Error as ActixWebError};
-use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
+use actix_web::{FromRequest, http, HttpMessage, HttpRequest, web};
+use actix_web::error::ErrorUnauthorized;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
-use crate::auth::{JwtToken, JwtTokenScope, JwtTokenType};
 use crate::AppState;
+use crate::auth::{JwtToken, JwtTokenScope, JwtTokenType};
 use crate::constants::{REFRESH_API_PATH, UNPROTECTED_API_PATHS};
-
 
 pub struct JwtMiddleware {
     pub user_id: uuid::Uuid,
@@ -27,9 +26,14 @@ impl FromRequest for JwtMiddleware {
             }));
         }
 
+        let expected_token_type = match req.path() {
+            REFRESH_API_PATH => JwtTokenType::Refresh,
+            _ => JwtTokenType::Access,
+        };
         let data = req.app_data::<web::Data<AppState>>().unwrap();
 
-        let token = req
+        // Get token from Authorization header
+        let mut token = req
             .headers()
             .get(http::header::AUTHORIZATION)
             .ok_or(ErrorUnauthorized("Authorization header not found"))
@@ -43,7 +47,16 @@ impl FromRequest for JwtMiddleware {
                     .replace("Bearer ", "")
                     .parse::<String>()
                     .map_err(|_| ErrorUnauthorized("Invalid authorization header"))
-            });
+            })
+            .or(
+                // Fallback to get token from cookie
+                match expected_token_type {
+                    JwtTokenType::Access => req.cookie("access_token"),
+                    JwtTokenType::Refresh => req.cookie("refresh_token"),
+                }
+                    .map(|cookie| cookie.value().to_string())
+                    .ok_or(ErrorUnauthorized("Authentication cookie not found"))
+            );
         
         let token_str = match token {
             Ok(t) => t,
@@ -59,17 +72,8 @@ impl FromRequest for JwtMiddleware {
             Err(_) => return ready(Err(ErrorUnauthorized("Invalid token"))),
         };
 
-        match req.path() {
-            REFRESH_API_PATH => {
-                if token.claims.type_ != JwtTokenType::Refresh {
-                    return ready(Err(ErrorUnauthorized("Invalid token")));
-                }
-            },
-            _ => {
-                if token.claims.type_ != JwtTokenType::Access {
-                    return ready(Err(ErrorUnauthorized("Invalid token")));
-                }
-            }
+        if token.claims.type_ != expected_token_type {
+            return ready(Err(ErrorUnauthorized("Invalid token")));
         }
 
         if token.claims.exp < chrono::Utc::now().timestamp() {

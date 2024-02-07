@@ -1,16 +1,16 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, web};
+use actix_web::cookie::Cookie;
 
+use crate::{db::models::user::UserDTO, errors::ServiceError};
+use crate::api::utils::enforce_scope;
 use crate::AppState;
+use crate::auth::JwtTokenScope;
 use crate::db::models::user::User;
 use crate::middlewares::auth::JwtMiddleware;
 use crate::services::auth_service;
-use crate::{db::models::user::UserDTO, errors::ServiceError};
-use crate::api::utils::enforce_scope;
-use crate::auth::JwtTokenScope;
 
-use super::models::MessageResponse;
 use super::models::auth::{LoginRequest, LoginResponse, SignupRequest, SignupResponse};
-
+use super::models::MessageResponse;
 
 /// Registration endpoint for new users
 #[utoipa::path(
@@ -43,12 +43,27 @@ pub async fn signup(body: web::Json<SignupRequest>, data: web::Data<AppState>) -
 pub async fn login(body: web::Json<LoginRequest>, data: web::Data<AppState>) -> Result<HttpResponse, ServiceError> {
     let user_dto = UserDTO { email: body.email.clone(), password: body.password.clone(), username: None };
     let (user, access_token, refresh_token) = auth_service::login(user_dto, &data.db, &data.env)?;
+
+    let access_token_cookie = Cookie::build("access_token", &access_token)
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .finish();
+    let refresh_token_cookie = Cookie::build("refresh_token", &refresh_token)
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .finish();
     
-    Ok(HttpResponse::Ok().json(LoginResponse {
-        access_token,
-        refresh_token,
-        profile: user
-    }))
+    Ok(HttpResponse::Ok()
+        .cookie(access_token_cookie)
+        .cookie(refresh_token_cookie)
+        .json(LoginResponse {
+            access_token,
+            refresh_token,
+            profile: user
+        })
+    )
 }
 
 
