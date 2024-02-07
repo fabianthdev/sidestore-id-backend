@@ -1,5 +1,6 @@
 use actix_web::{HttpResponse, Responder, web};
-use actix_web::cookie::Cookie;
+use actix_web::cookie::{Cookie, SameSite};
+use time::OffsetDateTime;
 
 use crate::{db::models::user::UserDTO, errors::ServiceError};
 use crate::api::utils::enforce_scope;
@@ -23,12 +24,17 @@ use super::models::MessageResponse;
 pub async fn signup(body: web::Json<SignupRequest>, data: web::Data<AppState>) -> Result<HttpResponse, ServiceError> {
     let user_dto = UserDTO { email: body.email.clone(), password: body.password.clone(), username: None };
     let (user, access_token, refresh_token) = auth_service::login(user_dto, &data.db, &data.env)?;
+    let (access_token_cookie, refresh_token_cookie) = get_auth_cookies(&access_token, &refresh_token);
 
-    Ok(HttpResponse::Ok().json(SignupResponse { 
-        access_token,
-        refresh_token,
-        profile: user
-    }))
+    Ok(HttpResponse::Ok()
+        .cookie(access_token_cookie)
+        .cookie(refresh_token_cookie)
+        .json(SignupResponse {
+            access_token,
+            refresh_token,
+            profile: user
+        })
+    )
 }
 
 
@@ -43,18 +49,8 @@ pub async fn signup(body: web::Json<SignupRequest>, data: web::Data<AppState>) -
 pub async fn login(body: web::Json<LoginRequest>, data: web::Data<AppState>) -> Result<HttpResponse, ServiceError> {
     let user_dto = UserDTO { email: body.email.clone(), password: body.password.clone(), username: None };
     let (user, access_token, refresh_token) = auth_service::login(user_dto, &data.db, &data.env)?;
+    let (access_token_cookie, refresh_token_cookie) = get_auth_cookies(&access_token, &refresh_token);
 
-    let access_token_cookie = Cookie::build("access_token", &access_token)
-        .path("/")
-        .secure(true)
-        .http_only(true)
-        .finish();
-    let refresh_token_cookie = Cookie::build("refresh_token", &refresh_token)
-        .path("/")
-        .secure(true)
-        .http_only(true)
-        .finish();
-    
     Ok(HttpResponse::Ok()
         .cookie(access_token_cookie)
         .cookie(refresh_token_cookie)
@@ -78,12 +74,17 @@ pub async fn login(body: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
 pub async fn refresh(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpResponse, ServiceError> {
     enforce_scope(&jwt, JwtTokenScope::Full)?;
     let (user, access_token, refresh_token) = auth_service::refresh(&data.db, &data.env, jwt.user_id)?;
+    let (access_token_cookie, refresh_token_cookie) = get_auth_cookies(&access_token, &refresh_token);
 
-    Ok(HttpResponse::Ok().json(LoginResponse { 
-        access_token,
-        refresh_token,
-        profile: user
-    }))
+    Ok(HttpResponse::Ok()
+        .cookie(access_token_cookie)
+        .cookie(refresh_token_cookie)
+        .json(LoginResponse {
+            access_token,
+            refresh_token,
+            profile: user
+        })
+    )
 }
 
 
@@ -93,7 +94,16 @@ pub async fn refresh(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<Ht
     path = "/api/auth/logout"
 )]
 pub async fn logout() -> impl Responder {
-    HttpResponse::Ok().json(MessageResponse { message: "Bye".to_string() })
+    let (mut access_token_cookie, mut refresh_token_cookie) = get_auth_cookies("", "");
+
+    // Invalidate the authentication cookies
+    access_token_cookie.set_expires(OffsetDateTime::UNIX_EPOCH);
+    refresh_token_cookie.set_expires(OffsetDateTime::UNIX_EPOCH);
+
+    HttpResponse::Ok()
+        .cookie(access_token_cookie)
+        .cookie(refresh_token_cookie)
+        .json(MessageResponse { message: "Bye".to_string() })
 }
 
 
@@ -110,4 +120,20 @@ pub async fn me(data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<HttpRes
 
     let user = auth_service::user_details(&data.db, jwt.user_id)?;
     Ok(HttpResponse::Ok().json(user))
+}
+
+fn get_auth_cookies<'a>(access_token: &'a str, refresh_token: &'a str) -> (Cookie<'a>, Cookie<'a>) {
+    let access_token_cookie = Cookie::build("access_token", access_token)
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::Strict)
+        .finish();
+    let refresh_token_cookie = Cookie::build("refresh_token", refresh_token)
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::Strict)
+        .finish();
+    (access_token_cookie, refresh_token_cookie)
 }

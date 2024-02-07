@@ -13,16 +13,32 @@ use crate::services::auth_service;
 use super::oauth2::oxide_auth_actix::{Authorize, ClientCredentials, OAuthOperation, OAuthRequest, OAuthResponse, Refresh, Token, WebError};
 use super::oauth2::state::Extras;
 
-pub async fn get_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>) -> Result<OAuthResponse, WebError> {
+pub async fn get_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<OAuthResponse, WebError> {
+    // Check if the user has authorized this client before
+    if let Some(user) = auth_service::user_details(&data.db, jwt.user_id).ok() {
+        let client_id = req
+            .query()
+            .and_then(|params| params.unique_value("client_id"))
+            .unwrap_or_default();
+
+        let conn = &mut data.db.get().unwrap();
+        if user.has_authorized_oauth_client(&client_id, conn) {
+            return state.send(Authorize(req)
+                .wrap(Extras::AuthPost(user.id, OAuth2AuthorizationResult::Allow))
+            ).await?
+        }
+    }
+
     state.send(Authorize(req)
         .wrap(Extras::AuthGet))
         .await?
 }
 
 pub async fn post_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<OAuthResponse, WebError> {
-    enforce_scope(&jwt, JwtTokenScope::Full).map_err(|e| WebError::Authorization)?;
+    enforce_scope(&jwt, JwtTokenScope::Full).map_err(|_| WebError::Authorization)?;
 
-    let user = auth_service::user_details(&data.db, jwt.user_id).map_err(|e| WebError::Authorization)?;
+    let mut user = auth_service::user_details(&data.db, jwt.user_id)
+        .map_err(|_| WebError::Authorization)?;
 
     let result_string = req.query()
         .and_then(|q| q.unique_value("result"))
@@ -34,12 +50,30 @@ pub async fn post_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State
         _ => Err(WebError::Query),
     }?;
 
-    let response = state.send(Authorize(req)
-        .wrap(Extras::AuthPost(user, result)))
+    let response = state.send(Authorize(req.clone())
+        .wrap(Extras::AuthPost(user.id.to_string(), result.clone())))
         .await?;
 
     match response {
         Ok(r) => {
+            // Save the authorization
+            let client_id = req
+                .query()
+                .and_then(|params| params.unique_value("client_id"))
+                .unwrap_or_default();
+            let conn = &mut data.db.get().unwrap();
+
+            match result {
+                OAuth2AuthorizationResult::Allow => {
+                    user.save_oauth_client_authorization(&client_id, conn)
+                        .map_err(|_| WebError::Authorization)?;
+                },
+                OAuth2AuthorizationResult::Deny => {
+                    user.remove_oauth_client_authorization(&client_id, conn)
+                        .map_err(|_| WebError::Authorization)?;
+                }
+            };
+
             let headers = r.get_headers();
             let location = headers.get("location");
             if let Some(redirect_url) = location {

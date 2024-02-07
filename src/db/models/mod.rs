@@ -1,4 +1,5 @@
 pub mod user;
+pub mod oauth_authorization;
 pub mod app_review;
 
 use diesel::result::Error;

@@ -7,7 +7,7 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 
 use crate::AppState;
 use crate::auth::{JwtToken, JwtTokenScope, JwtTokenType};
-use crate::constants::{REFRESH_API_PATH, UNPROTECTED_API_PATHS};
+use crate::constants::{OAUTH_GET_API_PATH, REFRESH_API_PATH, UNPROTECTED_API_PATHS};
 
 pub struct JwtMiddleware {
     pub user_id: uuid::Uuid,
@@ -33,7 +33,7 @@ impl FromRequest for JwtMiddleware {
         let data = req.app_data::<web::Data<AppState>>().unwrap();
 
         // Get token from Authorization header
-        let mut token = req
+        let token = req
             .headers()
             .get(http::header::AUTHORIZATION)
             .ok_or(ErrorUnauthorized("Authorization header not found"))
@@ -60,7 +60,15 @@ impl FromRequest for JwtMiddleware {
         
         let token_str = match token {
             Ok(t) => t,
-            Err(e) => return ready(Err(e)),
+            Err(e) => {
+                if req.path() == OAUTH_GET_API_PATH {
+                    return ready(Ok(JwtMiddleware {
+                        user_id: uuid::Uuid::nil(),
+                        scope: JwtTokenScope::Profile,
+                    }))
+                }
+                return ready(Err(e))
+            },
         };
 
         let token = match decode::<JwtToken>(

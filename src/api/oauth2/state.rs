@@ -15,7 +15,6 @@ use crate::api::oauth2::oxide_auth_actix::{
 use crate::api::oauth2::token_issuer::JwtTokenIssuer;
 use crate::auth::JwtTokenScope;
 use crate::config::Config;
-use crate::db::models::user::User;
 
 pub struct OAuth2State {
     endpoint: Generic<
@@ -31,7 +30,7 @@ pub struct OAuth2State {
 #[derive(Debug, Clone)]
 pub enum Extras {
     AuthGet,
-    AuthPost(User, OAuth2AuthorizationResult),
+    AuthPost(String, OAuth2AuthorizationResult),
     ClientCredentials,
     Nothing,
 }
@@ -143,10 +142,10 @@ where
 
                 op.run(self.with_solicitor(solicitor))
             },
-            Extras::AuthPost(user, result) => {
+            Extras::AuthPost(user_id, result) => {
                 let solicitor = FnSolicitor(move |_: &mut OAuthRequest, _: Solicitation| {
                     match result {
-                        OAuth2AuthorizationResult::Allow => OwnerConsent::Authorized(user.id.to_string()),
+                        OAuth2AuthorizationResult::Allow => OwnerConsent::Authorized(user_id.clone()),
                         _ => OwnerConsent::Denied
                     }
                 });
