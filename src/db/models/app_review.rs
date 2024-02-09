@@ -1,16 +1,15 @@
-use diesel::sql_types::Uuid;
-use log::error;
-use chrono::{Utc, NaiveDateTime};
-use serde::{Deserialize, Serialize};
-use diesel::{Queryable, Insertable, AsChangeset, RunQueryDsl, QueryDsl, ExpressionMethods};
+use chrono::{NaiveDateTime, Utc};
 use diesel::result::Error;
+use diesel::sql_types::Uuid;
+use diesel::{AsChangeset, ExpressionMethods, Insertable, QueryDsl, Queryable, RunQueryDsl};
+use log::error;
+use serde::{Deserialize, Serialize};
 
 use crate::api::models::app_reviews::{AppReviewSignatureRequest, AppReviewStatus};
-use crate::db::Connection;
 use crate::db::schema::app_review_signatures;
+use crate::db::Connection;
 
 use super::{db_model, DbModel};
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = app_review_signatures)]
@@ -29,7 +28,11 @@ pub struct AppReviewSignature {
     pub updated_at: NaiveDateTime,
 }
 
-db_model!(app_review_signatures::dsl::app_review_signatures, app_review_signatures::dsl::id, AppReviewSignature);
+db_model!(
+    app_review_signatures::dsl::app_review_signatures,
+    app_review_signatures::dsl::id,
+    AppReviewSignature
+);
 
 impl AppReviewSignature {
     pub fn find_by_id(id: &uuid::Uuid, conn: &mut Connection) -> Result<Self, Error> {
@@ -38,7 +41,12 @@ impl AppReviewSignature {
             .get_result::<Self>(conn)
     }
 
-    pub fn find_by_user_id(user_id: &uuid::Uuid, source_id: &str, app_bundle_id: &str, conn: &mut Connection) -> Result<Self, Error> {
+    pub fn find_by_user_id(
+        user_id: &uuid::Uuid,
+        source_id: &str,
+        app_bundle_id: &str,
+        conn: &mut Connection,
+    ) -> Result<Self, Error> {
         app_review_signatures::dsl::app_review_signatures
             .filter(app_review_signatures::user_id.eq(user_id.to_string()))
             .filter(app_review_signatures::source_id.eq(source_id.to_string()))
@@ -46,13 +54,20 @@ impl AppReviewSignature {
             .get_result::<Self>(conn)
     }
 
-    pub fn find_all_by_user_id(user_id: &uuid::Uuid, conn: &mut Connection) -> Result<Vec<Self>, Error> {
+    pub fn find_all_by_user_id(
+        user_id: &uuid::Uuid,
+        conn: &mut Connection,
+    ) -> Result<Vec<Self>, Error> {
         app_review_signatures::dsl::app_review_signatures
             .filter(app_review_signatures::user_id.eq(user_id.to_string()))
             .get_results(conn)
     }
 
-    pub fn find_latest_sequence_number(source_id: &str, app_bundle_id: &str, conn: &mut Connection) -> Result<i32, Error> {
+    pub fn find_latest_sequence_number(
+        source_id: &str,
+        app_bundle_id: &str,
+        conn: &mut Connection,
+    ) -> Result<i32, Error> {
         app_review_signatures::dsl::app_review_signatures
             .filter(app_review_signatures::source_id.eq(source_id.to_string()))
             .filter(app_review_signatures::app_bundle_id.eq(app_bundle_id.to_string()))

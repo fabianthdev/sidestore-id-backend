@@ -1,14 +1,20 @@
-pub mod user;
-pub mod oauth_authorization;
 pub mod app_review;
+pub mod oauth_authorization;
+pub mod user;
 
 use diesel::result::Error;
 
 use crate::db::Connection;
 
 pub trait DbModel {
-    fn insert(&mut self, conn: &mut Connection) -> Result<Self, Error> where Self: std::marker::Sized;
-    fn update(&mut self, conn: &mut Connection) -> Result<Self, Error> where Self: std::marker::Sized;
+    fn insert(&mut self, conn: &mut Connection) -> Result<Self, Error>
+    where
+        Self: std::marker::Sized;
+
+    fn update(&mut self, conn: &mut Connection) -> Result<Self, Error>
+    where
+        Self: std::marker::Sized;
+
     fn delete(&mut self, conn: &mut Connection) -> Result<(), Error>;
 }
 

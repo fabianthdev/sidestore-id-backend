@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, ToResponse};
+use utoipa::{ToResponse, ToSchema};
 
 use crate::db::models::user::User;
-
 
 #[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {

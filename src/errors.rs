@@ -3,8 +3,8 @@ use actix_web::{
     http::{header::ContentType, StatusCode},
     HttpResponse,
 };
-use serde::Serialize;
 use derive_more::{Display, Error};
+use serde::Serialize;
 use utoipa::ToResponse;
 
 #[derive(Debug, Display, Error)]
@@ -26,9 +26,7 @@ pub enum ServiceError {
 }
 
 #[derive(Serialize, ToResponse)]
-#[response(
-    description = "The server encountered an error while trying to fulfill the request."
-)]
+#[response(description = "The server encountered an error while trying to fulfill the request.")]
 pub struct ErrorResponse {
     pub error_message: String,
 }

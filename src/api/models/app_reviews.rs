@@ -3,7 +3,6 @@ use utoipa::{ToResponse, ToSchema};
 
 use crate::db::models::app_review::AppReviewSignature;
 
-
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct AppReviewSignatureRequest {
     pub source_identifier: String,
@@ -13,7 +12,6 @@ pub struct AppReviewSignatureRequest {
     pub review_title: String,
     pub review_body: String,
 }
-
 
 #[derive(Serialize, Deserialize, ToResponse)]
 pub struct AppReviewSignatureResponse {
@@ -33,14 +31,14 @@ pub enum AppReviewStatus {
     #[serde(rename = "published")]
     Published,
     #[serde(rename = "deleted")]
-    Deleted
+    Deleted,
 }
 
 impl From<AppReviewStatus> for String {
     fn from(status: AppReviewStatus) -> Self {
         match status {
             AppReviewStatus::Published => "published".to_string(),
-            AppReviewStatus::Deleted => "deleted".to_string()
+            AppReviewStatus::Deleted => "deleted".to_string(),
         }
     }
 }
@@ -61,7 +59,10 @@ pub struct AppReviewSignatureData {
 }
 
 impl AppReviewSignatureData {
-    pub fn from_signature_request(request: &AppReviewSignatureRequest, review: &AppReviewSignature) -> AppReviewSignatureData {
+    pub fn from_signature_request(
+        request: &AppReviewSignatureRequest,
+        review: &AppReviewSignature,
+    ) -> AppReviewSignatureData {
         AppReviewSignatureData {
             sidestore_user_id: review.user_id.to_string(),
             status: AppReviewStatus::Published,
@@ -73,11 +74,14 @@ impl AppReviewSignatureData {
             review_title: Some(request.review_title.clone()),
             review_body: Some(request.review_body.clone()),
             created_at: review.created_at.timestamp(),
-            updated_at: review.updated_at.timestamp()
+            updated_at: review.updated_at.timestamp(),
         }
     }
 
-    pub fn from_deletion_request(request: &AppReviewDeletionRequest, review: &AppReviewSignature) -> AppReviewSignatureData {
+    pub fn from_deletion_request(
+        request: &AppReviewDeletionRequest,
+        review: &AppReviewSignature,
+    ) -> AppReviewSignatureData {
         AppReviewSignatureData {
             sidestore_user_id: review.user_id.to_string(),
             status: AppReviewStatus::Deleted,
@@ -89,11 +93,10 @@ impl AppReviewSignatureData {
             review_title: None,
             review_body: None,
             created_at: review.created_at.timestamp(),
-            updated_at: review.updated_at.timestamp()
+            updated_at: review.updated_at.timestamp(),
         }
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize, ToResponse, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -112,13 +115,13 @@ impl From<&AppReviewSignature> for UserAppReview {
     fn from(value: &AppReviewSignature) -> Self {
         UserAppReview {
             id: value.id.clone(),
-            status: AppReviewStatus::Published,  // TODO: Make this dynamic
+            status: AppReviewStatus::Published, // TODO: Make this dynamic
             source_identifier: value.source_id.clone(),
             app_bundle_identifier: value.app_bundle_id.clone(),
             version_number: value.app_version.clone(),
             review_rating: value.review_rating,
             date: value.updated_at.timestamp(),
-            signature: value.signature.clone()
+            signature: value.signature.clone(),
         }
     }
 }

@@ -1,10 +1,11 @@
+use super::oxide_auth_actix::{OAuthOperation, OAuthRequest, OAuthResponse, WebError};
 use oxide_auth::{
     endpoint::{
-        AccessTokenFlow, AuthorizationFlow, Endpoint, RefreshFlow, ResourceFlow, ClientCredentialsFlow,
+        AccessTokenFlow, AuthorizationFlow, ClientCredentialsFlow, Endpoint, RefreshFlow,
+        ResourceFlow,
     },
     primitives::grant::Grant,
 };
-use super::oxide_auth_actix::{OAuthRequest, OAuthResponse, OAuthOperation, WebError};
 
 /// Authorization-related operations
 pub struct Authorize(pub OAuthRequest);

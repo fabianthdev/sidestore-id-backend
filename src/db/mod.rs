@@ -10,7 +10,7 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 pub mod models;
 pub mod schema;
 
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/db/migrations");
 
 pub type Connection = PgConnection;
 

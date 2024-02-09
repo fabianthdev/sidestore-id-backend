@@ -52,8 +52,4 @@ diesel::table! {
 diesel::joinable!(app_review_signatures -> users (user_id));
 diesel::joinable!(oauth_authorizations -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    app_review_signatures,
-    oauth_authorizations,
-    users,
-);
+diesel::allow_tables_to_appear_in_same_query!(app_review_signatures, oauth_authorizations, users,);

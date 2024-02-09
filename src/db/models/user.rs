@@ -1,15 +1,24 @@
-use log::error;
-use chrono::{Utc, NaiveDateTime};
-use serde::{Deserialize, Serialize};
+use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::result::Error;
+use log::error;
+use serde::{Deserialize, Serialize};
 use utoipa::ToResponse;
 
-use crate::db::Connection;
 use crate::db::schema::users;
+use crate::db::Connection;
 
-
-#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Identifiable, Insertable, AsChangeset, ToResponse)]
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Queryable,
+    Identifiable,
+    Insertable,
+    AsChangeset,
+    ToResponse,
+)]
 #[diesel(table_name = users)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
@@ -51,7 +60,10 @@ impl User {
 
 impl User {
     pub fn insert(&mut self, conn: &mut Connection) -> Result<Self, Error> {
-        match diesel::insert_into(users::dsl::users).values(self.clone()).execute(conn) {
+        match diesel::insert_into(users::dsl::users)
+            .values(self.clone())
+            .execute(conn)
+        {
             Ok(_) => Ok(self.clone()),
             Err(e) => {
                 error!("Error inserting user: {:?}", e);
@@ -75,7 +87,10 @@ impl User {
     pub async fn update(&mut self, conn: &mut Connection) -> Result<Self, Error> {
         self.updated_at = Utc::now().naive_utc();
 
-        match diesel::update(users::dsl::users).set(self.clone()).get_result::<User>(conn) {
+        match diesel::update(users::dsl::users)
+            .set(self.clone())
+            .get_result::<User>(conn)
+        {
             Ok(u) => Ok(u),
             Err(e) => {
                 error!("Error updating user: {:?}", e);

@@ -18,13 +18,15 @@ use actix_web::{
 };
 use futures::future::{self, FutureExt, LocalBoxFuture, Ready};
 use oxide_auth::{
-    endpoint::{Endpoint, NormalizedParameter, OAuthError, QueryParameter, WebRequest, WebResponse},
+    endpoint::{
+        Endpoint, NormalizedParameter, OAuthError, QueryParameter, WebRequest, WebResponse,
+    },
     frontends::simple::endpoint::Error,
 };
 use std::{borrow::Cow, convert::TryFrom, error, fmt};
 use url::Url;
 
-pub use super::operations::{Authorize, Refresh, Resource, Token, ClientCredentials};
+pub use super::operations::{Authorize, ClientCredentials, Refresh, Resource, Token};
 
 /// Describes an operation that can be performed in the presence of an `Endpoint`
 ///
@@ -446,7 +448,9 @@ impl fmt::Display for WebError {
             WebError::Canceled => write!(f, "Operation canceled"),
             WebError::Mailbox => write!(f, "An actor's mailbox was full"),
             WebError::InternalError(None) => write!(f, "An internal server error occured"),
-            WebError::InternalError(Some(ref e)) => write!(f, "An internal server error occured: {}", e),
+            WebError::InternalError(Some(ref e)) => {
+                write!(f, "An internal server error occured: {}", e)
+            }
         }
     }
 }

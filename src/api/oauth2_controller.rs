@@ -4,16 +4,24 @@ use actix::Addr;
 use actix_web::web;
 use oxide_auth::endpoint::{QueryParameter, WebResponse};
 
-use crate::{api::oauth2::state::OAuth2State, AppState, middlewares::auth::JwtMiddleware};
 use crate::api::models::oauth2::{OAuth2AuthorizationResult, OAuthRedirectResponse};
 use crate::api::utils::enforce_scope;
 use crate::auth::JwtTokenScope;
 use crate::services::auth_service;
+use crate::{api::oauth2::state::OAuth2State, middlewares::auth::JwtMiddleware, AppState};
 
-use super::oauth2::oxide_auth_actix::{Authorize, ClientCredentials, OAuthOperation, OAuthRequest, OAuthResponse, Refresh, Token, WebError};
+use super::oauth2::oxide_auth_actix::{
+    Authorize, ClientCredentials, OAuthOperation, OAuthRequest, OAuthResponse, Refresh, Token,
+    WebError,
+};
 use super::oauth2::state::Extras;
 
-pub async fn get_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<OAuthResponse, WebError> {
+pub async fn get_authorize(
+    req: OAuthRequest,
+    state: web::Data<Addr<OAuth2State>>,
+    data: web::Data<AppState>,
+    jwt: JwtMiddleware,
+) -> Result<OAuthResponse, WebError> {
     // Check if the user has authorized this client before
     if let Some(user) = auth_service::user_details(&data.db, jwt.user_id).ok() {
         let client_id = req
@@ -23,35 +31,37 @@ pub async fn get_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>
 
         let conn = &mut data.db.get().unwrap();
         if user.has_authorized_oauth_client(&client_id, conn) {
-            return state.send(Authorize(req)
-                .wrap(Extras::AuthPost(user.id, OAuth2AuthorizationResult::Allow))
-            ).await?
+            return state
+                .send(
+                    Authorize(req)
+                        .wrap(Extras::AuthPost(user.id, OAuth2AuthorizationResult::Allow)),
+                )
+                .await?;
         }
     }
 
-    state.send(Authorize(req)
-        .wrap(Extras::AuthGet))
-        .await?
+    state.send(Authorize(req).wrap(Extras::AuthGet)).await?
 }
 
-pub async fn post_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>, data: web::Data<AppState>, jwt: JwtMiddleware) -> Result<OAuthResponse, WebError> {
+pub async fn post_authorize(
+    req: OAuthRequest,
+    state: web::Data<Addr<OAuth2State>>,
+    data: web::Data<AppState>,
+    jwt: JwtMiddleware,
+) -> Result<OAuthResponse, WebError> {
     enforce_scope(&jwt, JwtTokenScope::Full).map_err(|_| WebError::Authorization)?;
 
-    let mut user = auth_service::user_details(&data.db, jwt.user_id)
-        .map_err(|_| WebError::Authorization)?;
+    let mut user =
+        auth_service::user_details(&data.db, jwt.user_id).map_err(|_| WebError::Authorization)?;
 
-    let result_string = req.query()
+    let result_string = req
+        .query()
         .and_then(|q| q.unique_value("result"))
         .ok_or(WebError::Query)?;
 
-    let result = match result_string.deref() {
-        "allow" => Ok(OAuth2AuthorizationResult::Allow),
-        "deny" => Ok(OAuth2AuthorizationResult::Deny),
-        _ => Err(WebError::Query),
-    }?;
-
-    let response = state.send(Authorize(req.clone())
-        .wrap(Extras::AuthPost(user.id.to_string(), result.clone())))
+    let result = OAuth2AuthorizationResult::from(result_string.deref());
+    let response = state
+        .send(Authorize(req.clone()).wrap(Extras::AuthPost(user.id.to_string(), result.clone())))
         .await?;
 
     match response {
@@ -67,7 +77,7 @@ pub async fn post_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State
                 OAuth2AuthorizationResult::Allow => {
                     user.save_oauth_client_authorization(&client_id, conn)
                         .map_err(|_| WebError::Authorization)?;
-                },
+                }
                 OAuth2AuthorizationResult::Deny => {
                     user.remove_oauth_client_authorization(&client_id, conn)
                         .map_err(|_| WebError::Authorization)?;
@@ -78,20 +88,24 @@ pub async fn post_authorize(req: OAuthRequest, state: web::Data<Addr<OAuth2State
             let location = headers.get("location");
             if let Some(redirect_url) = location {
                 let body = serde_json::to_string(&OAuthRedirectResponse {
-                    redirect_url: redirect_url.to_str().unwrap().to_string()
-                }).unwrap();
+                    redirect_url: redirect_url.to_str().unwrap().to_string(),
+                })
+                .unwrap();
                 let mut modified_response = OAuthResponse::ok();
                 _ = modified_response.body_json(&body);
                 Ok(modified_response)
             } else {
                 Ok(r)
             }
-        },
-        Err(e) => Err(e)
+        }
+        Err(e) => Err(e),
     }
 }
 
-pub async fn token(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>) -> Result<OAuthResponse, WebError> {
+pub async fn token(
+    req: OAuthRequest,
+    state: web::Data<Addr<OAuth2State>>,
+) -> Result<OAuthResponse, WebError> {
     let grant_type = req.body().and_then(|body| body.unique_value("grant_type"));
 
     match grant_type.as_deref() {
@@ -99,7 +113,7 @@ pub async fn token(req: OAuthRequest, state: web::Data<Addr<OAuth2State>>) -> Re
             state
                 .send(ClientCredentials(req).wrap(Extras::ClientCredentials))
                 .await?
-        },
+        }
         // Each flow will validate the grant_type again, so we can let one case handle
         // any incorrect or unsupported options.
         _ => state.send(Token(req).wrap(Extras::Nothing)).await?,

@@ -4,10 +4,9 @@ use serde::Deserialize;
 
 use crate::auth::JwtTokenScope;
 
-
 #[derive(Debug, Deserialize)]
 pub struct OAuthConfig {
-    pub clients: Vec<OAuthClient>
+    pub clients: Vec<OAuthClient>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -33,7 +32,7 @@ impl Into<Client> for &OAuthClient {
                 additional_redirect_urls
                     .iter()
                     .map(|url| RegisteredUrl::Exact(ExactUrl::new(url.to_string()).unwrap()))
-                    .collect()
+                    .collect(),
             )
         }
 

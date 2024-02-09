@@ -5,11 +5,22 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use serde::{Deserialize, Serialize};
 
-use crate::db::Connection;
 use crate::db::models::user::User;
 use crate::db::schema::oauth_authorizations;
+use crate::db::Connection;
 
-#[derive(Identifiable, Insertable, Associations, Queryable, Selectable, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(
+    Identifiable,
+    Insertable,
+    Associations,
+    Queryable,
+    Selectable,
+    PartialEq,
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+)]
 #[diesel(belongs_to(User))]
 #[diesel(primary_key(user_id, client_id))]
 #[diesel(table_name = oauth_authorizations)]
@@ -51,14 +62,16 @@ impl OAuthAuthorization {
     }
 
     pub fn delete(&mut self, conn: &mut Connection) -> Result<(), Error> {
-        diesel::delete(self.deref())
-            .execute(conn)
-            .map(|_| ())
+        diesel::delete(self.deref()).execute(conn).map(|_| ())
     }
 }
 
 impl User {
-    pub fn authorization_for_oauth_client(&self, client_id: &str, conn: &mut Connection) -> Option<OAuthAuthorization> {
+    pub fn authorization_for_oauth_client(
+        &self,
+        client_id: &str,
+        conn: &mut Connection,
+    ) -> Option<OAuthAuthorization> {
         OAuthAuthorization::belonging_to(self)
             .select(OAuthAuthorization::as_select())
             .filter(oauth_authorizations::client_id.eq(client_id))
@@ -67,19 +80,27 @@ impl User {
     }
 
     pub fn has_authorized_oauth_client(&self, client_id: &str, conn: &mut Connection) -> bool {
-        self.authorization_for_oauth_client(client_id, conn).is_some()
+        self.authorization_for_oauth_client(client_id, conn)
+            .is_some()
     }
 
-    pub fn save_oauth_client_authorization(&mut self, client_id: &str, conn: &mut Connection) -> Result<(), Error> {
+    pub fn save_oauth_client_authorization(
+        &mut self,
+        client_id: &str,
+        conn: &mut Connection,
+    ) -> Result<(), Error> {
         if self.has_authorized_oauth_client(client_id, conn) {
-            return Ok(())
+            return Ok(());
         }
 
-        OAuthAuthorization::new(&self, client_id)
-            .insert(conn)
+        OAuthAuthorization::new(&self, client_id).insert(conn)
     }
 
-    pub fn remove_oauth_client_authorization(&mut self, client_id: &str, conn: &mut Connection) -> Result<(), Error> {
+    pub fn remove_oauth_client_authorization(
+        &mut self,
+        client_id: &str,
+        conn: &mut Connection,
+    ) -> Result<(), Error> {
         if let Some(mut authorization) = self.authorization_for_oauth_client(client_id, conn) {
             authorization.delete(conn)?;
         }

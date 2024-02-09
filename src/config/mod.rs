@@ -1,4 +1,6 @@
-use crate::constants::{DEFAULT_JWT_EXPIRATION, DEFAULT_JWT_REFRESH_EXPIRATION, DEFAULT_OAUTH_CONFIG_PATH};
+use crate::constants::{
+    DEFAULT_JWT_EXPIRATION, DEFAULT_JWT_REFRESH_EXPIRATION, DEFAULT_OAUTH_CONFIG_PATH,
+};
 
 pub mod app;
 pub mod db;
@@ -23,18 +25,25 @@ impl Config {
     pub fn init() -> Config {
         // let secret_key = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
         let host = std::env::var("HOST").expect("HOST must be set");
-        let port = match std::env::var("PORT").expect("PORT must be set").parse::<u16>() {
+        let port = match std::env::var("PORT")
+            .expect("PORT must be set")
+            .parse::<u16>()
+        {
             Ok(val) => val,
             Err(_) => panic!("PORT must be an integer"),
         };
         let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
         let jwt_issuer = std::env::var("JWT_ISSUER").expect("JWT_ISSUER must be set");
         let jwt_expiration = match std::env::var("JWT_EXPIRATION") {
-            Ok(val) => val.parse::<i64>().expect("JWT_EXPIRATION must be an integer"),
+            Ok(val) => val
+                .parse::<i64>()
+                .expect("JWT_EXPIRATION must be an integer"),
             Err(_) => DEFAULT_JWT_EXPIRATION,
         };
         let jwt_refresh_expiration = match std::env::var("JWT_REFRESH_EXPIRATION") {
-            Ok(val) => val.parse::<i64>().expect("JWT_REFRESH_EXPIRATION must be an integer"),
+            Ok(val) => val
+                .parse::<i64>()
+                .expect("JWT_REFRESH_EXPIRATION must be an integer"),
             Err(_) => DEFAULT_JWT_REFRESH_EXPIRATION,
         };
         let cors_origin = std::env::var("CORS_ORIGIN").expect("CORS_ORIGIN must be set");
@@ -42,8 +51,8 @@ impl Config {
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let storage_path = std::env::var("STORAGE_PATH").expect("STORAGE_PATH must be set");
 
-        let oauth_config_path = std::env::var("OAUTH_CONFIG_PATH")
-            .unwrap_or(DEFAULT_OAUTH_CONFIG_PATH.to_string());
+        let oauth_config_path =
+            std::env::var("OAUTH_CONFIG_PATH").unwrap_or(DEFAULT_OAUTH_CONFIG_PATH.to_string());
 
         Config {
             // secret_key,

@@ -1,5 +1,5 @@
-use oxide_auth::primitives::scope::{ParseScopeErr, Scope};
 use crate::auth::JwtTokenScope;
+use oxide_auth::primitives::scope::{ParseScopeErr, Scope};
 
 impl JwtTokenScope {
     pub fn into_oauth_scope(self) -> Result<Scope, ParseScopeErr> {
