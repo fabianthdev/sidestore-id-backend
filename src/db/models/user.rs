@@ -1,7 +1,7 @@
 use log::error;
 use chrono::{Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
-use diesel::{Queryable, Insertable, AsChangeset, RunQueryDsl, QueryDsl, ExpressionMethods};
+use diesel::prelude::*;
 use diesel::result::Error;
 use utoipa::ToResponse;
 
@@ -9,10 +9,11 @@ use crate::db::Connection;
 use crate::db::schema::users;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset, ToResponse)]
+#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Identifiable, Insertable, AsChangeset, ToResponse)]
 #[diesel(table_name = users)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
-    #[serde(default, skip_serializing)]
+    #[serde(default)]
     pub id: String,
     pub email: String,
     pub username: Option<String>,

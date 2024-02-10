@@ -1,0 +1,5 @@
+[[clients]]
+client_id = "example-client"
+client_secret = "very-secret-secret"
+scope = "profile"
+redirect_uri = "https://auth.example.com/oauth/callback"
