@@ -1,3 +1,15 @@
+use actix::Actor;
+use actix_cors::Cors;
+use actix_web::{App, HttpServer, web};
+use actix_web::middleware::Logger;
+use ed25519_dalek::SigningKey;
+use log::info;
+
+use crate::api::oauth2::state::OAuth2State;
+use crate::config::Config;
+use crate::db::Pool;
+use crate::util::review_signing::create_or_load_review_signing_key;
+
 mod api;
 mod auth;
 mod config;
@@ -7,18 +19,6 @@ mod middlewares;
 mod services;
 mod errors;
 mod util;
-
-use actix::Actor;
-use actix_web::{web, App, HttpServer};
-use actix_cors::Cors;
-use ed25519_dalek::SigningKey;
-use log::info;
-
-use crate::config::Config;
-use crate::db::Pool;
-use crate::util::review_signing::create_or_load_review_signing_key;
-use crate::api::oauth2::state::OAuth2State;
-
 
 pub struct AppState {
     db: Pool,
@@ -63,14 +63,13 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials()
                     .max_age(3600)
             )
-            // .wrap(Logger::default())
+            .wrap(Logger::default())
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 env: config.clone(),
                 review_signing_key: review_signing_key.clone(),
             }))
             .app_data(web::Data::new(oauth2_state.clone()))
-            // .wrap(actix_web::middleware::Logger::default())
             .configure(config::app::config_services)
     })
     .bind(&app_url)?
